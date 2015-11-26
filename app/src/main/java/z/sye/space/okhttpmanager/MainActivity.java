@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
                 .addJsonBody("{" + "\"pageSize\":" +  "\"8\"" + "}")
                 .callback(callback)
                 .postJson();
+
     }
 
     @Override

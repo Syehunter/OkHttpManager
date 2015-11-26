@@ -4,6 +4,8 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
 
 import z.sye.space.library.response.ResponseCallback;
@@ -21,7 +23,7 @@ public class OkHttpManager {
 
     private static String mUrl;
     private static HashMap<String, String> mHeader;
-    private static String mJson;
+    private static JSONObject mJsonObject;
 
     private OkHttpManager(){
 
@@ -58,11 +60,11 @@ public class OkHttpManager {
 
     /**
      * Json格式请求体
-     * @param json
+     * @param jsonObject
      * @return
      */
-    public static OkHttpManager addJsonBody(String json){
-        mJson = json;
+    public static OkHttpManager addJsonBody(JSONObject jsonObject){
+        mJsonObject = jsonObject;
         return mInstance;
     }
 
@@ -85,8 +87,8 @@ public class OkHttpManager {
         }
 
         //添加RequestBody
-        if (JsonValidator.validate(mJson)){
-            RequestBody requestBody = RequestBody.create(JSON, mJson);
+        if (null != mJsonObject){
+            RequestBody requestBody = RequestBody.create(JSON, mJsonObject.toString());
             builder.post(requestBody);
         }
 
@@ -107,6 +109,6 @@ public class OkHttpManager {
         responseCallback = null;
         mHeader = null;
         mUrl = null;
-        mJson = null;
+        mJsonObject = null;
     }
 }
