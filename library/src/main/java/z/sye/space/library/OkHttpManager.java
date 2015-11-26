@@ -1,24 +1,27 @@
 package z.sye.space.library;
 
-import android.util.Log;
-
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 
-import z.sye.space.library.builder.RequestBuilder;
+import java.util.HashMap;
+
 import z.sye.space.library.response.ResponseCallback;
+import z.sye.space.library.utils.JsonValidator;
 
 /**
  * Created by Syehunter on 2015/11/26.
  */
 public class OkHttpManager {
 
-    private static RequestBuilder requestBuilder = new RequestBuilder();
     private static ResponseCallback responseCallback = new ResponseCallback();
 
     private static final OkHttpManager mInstance = new OkHttpManager();
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+    private static String mUrl;
+    private static HashMap<String, String> mHeader;
+    private static String mJson;
 
     private OkHttpManager(){
 
@@ -28,13 +31,38 @@ public class OkHttpManager {
         return mInstance;
     }
 
-    public static OkHttpManager requestBuilder(RequestBuilder requestBuilder){
-        mInstance.requestBuilder = requestBuilder;
+    public static OkHttpManager callback(ResponseCallback responseCallback){
+        mInstance.responseCallback = responseCallback;
         return mInstance;
     }
 
-    public static OkHttpManager callback(ResponseCallback responseCallback){
-        mInstance.responseCallback = responseCallback;
+    /**
+     * 设置请求的Url
+     * @param url
+     * @return
+     */
+    public static OkHttpManager url(String url){
+        mInstance.mUrl = url;
+        return mInstance;
+    }
+
+    /**
+     * 设置请求头
+     * @param header
+     * @return
+     */
+    public static OkHttpManager addHeader(HashMap<String, String> header){
+        mInstance.mHeader = header;
+        return mInstance;
+    }
+
+    /**
+     * Json格式请求体
+     * @param json
+     * @return
+     */
+    public static OkHttpManager addJsonBody(String json){
+        mJson = json;
         return mInstance;
     }
 
@@ -45,22 +73,20 @@ public class OkHttpManager {
         Request.Builder builder = new Request.Builder();
 
         //url
-        if (null != requestBuilder.url()){
-            builder.url(requestBuilder.url());
+        if (null != mUrl){
+            builder.url(mUrl);
         }
 
         //RequestHeader
-        if (null != requestBuilder.addHeader()){
-            for (String key : requestBuilder.addHeader().keySet()){
-                builder.addHeader(key, requestBuilder.addHeader().get(key));
+        if (null != mHeader){
+            for (String key : mHeader.keySet()){
+                builder.addHeader(key, mHeader.get(key));
             }
         }
 
         //添加RequestBody
-        if (JsonValidator.validate(requestBuilder.addJsonBody())){
-            String s = requestBuilder.addJsonBody();
-            RequestBody requestBody = RequestBody.create(JSON, requestBuilder.addJsonBody());
-            Log.i(mInstance.toString(), requestBuilder.addJsonBody());
+        if (JsonValidator.validate(mJson)){
+            RequestBody requestBody = RequestBody.create(JSON, mJson);
             builder.post(requestBody);
         }
 
@@ -72,6 +98,15 @@ public class OkHttpManager {
             //需要回调
             OkHttpClientManager.postJson(request, responseCallback);
         }
+        reset();
     }
 
+    /**
+     * 发送请求后将所有参数重置     */
+    private static void reset(){
+        responseCallback = null;
+        mHeader = null;
+        mUrl = null;
+        mJson = null;
+    }
 }

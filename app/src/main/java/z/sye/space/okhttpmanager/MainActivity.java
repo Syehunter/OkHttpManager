@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import z.sye.space.library.OkHttpManager;
-import z.sye.space.library.builder.RequestBuilder;
 import z.sye.space.library.response.ResponseCallback;
 
 public class MainActivity extends AppCompatActivity {
@@ -38,28 +37,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        RequestBuilder builder = new RequestBuilder(){
-
-            @Override
-            public String url() {
-                return "http://app.kfxiong.com/client/homeBorrow.do";
-            }
-
-            @Override
-            public HashMap<String, String> addHeader() {
-                HashMap<String, String> headers = new HashMap<>();
-                headers.put("version", "1.0.0");
-                headers.put("secretKey", "");
-                headers.put("channel", "Android");
-                return headers;
-            }
-
-            @Override
-            public String addJsonBody() {
-                return "{" + "\"pageSize\":" +  "\"8\"" + "}";
-            }
-        };
-
         ResponseCallback callback = new ResponseCallback(){
             @Override
             public void onResponse(Response response) throws IOException {
@@ -69,8 +46,14 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("version", "1.0.0");
+        headers.put("secretKey", "");
+        headers.put("channel", "Android");
 
-        OkHttpManager.requestBuilder(builder)
+        OkHttpManager.url("http://app.kfxiong.com/client/homeBorrow.do")
+                .addHeader(headers)
+                .addJsonBody("{" + "\"pageSize\":" +  "\"8\"" + "}")
                 .callback(callback)
                 .postJson();
     }
