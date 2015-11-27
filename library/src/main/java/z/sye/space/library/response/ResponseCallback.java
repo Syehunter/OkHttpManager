@@ -1,35 +1,70 @@
-/**
- * @(#) z.sye.space.library.response 2015/11/26;
- * <p/>
- * Copyright (c), 2009 深圳孔方兄金融信息服务有限公司（Shenzhen kfxiong
- * Financial Information Service Co. Ltd.）
- * <p/>
- * 著作权人保留一切权利，任何使用需经授权。
- */
 package z.sye.space.library.response;
 
-import com.squareup.okhttp.Callback;
+import com.google.gson.internal.$Gson$Types;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 
-import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 /**
- * Created by Syehunter on 2015/11/26.
+ * Created by Syehunter on 2015/11/27.
  */
-public class ResponseCallback implements Callback {
+public abstract class ResponseCallBack<T> {
 
-    public ResponseCallback(){
+    public Type mType;
 
+    public ResponseCallBack(){
+        mType = getSuperClassType(getClass());
     }
 
-    @Override
-    public void onFailure(Request request, IOException e) {
-
+    /**
+     * 规范泛型参数
+     * @param clazz
+     * @return
+     */
+    static Type getSuperClassType(Class<?> clazz){
+        Type superClass = clazz.getGenericSuperclass();
+        if (superClass instanceof Class){
+            throw new RuntimeException("Missing type parameter.");
+        }
+        //获取泛型
+        ParameterizedType parameterizedType = (ParameterizedType) superClass;
+        return $Gson$Types.canonicalize(parameterizedType.getActualTypeArguments()[0]);
     }
 
-    @Override
-    public void onResponse(Response response) throws IOException {
-
+    /**
+     * 发送请求之前的操作
+     */
+    public void onPreExcute(){
     }
+
+    /**
+     * 发送请求之后的操作
+     */
+    public void onPostExcute(){
+    }
+
+    /**
+     * 请求过程中
+     * @param progress
+     */
+    public void onProgressUpdate(int progress){
+    }
+
+    public abstract void onResponse(T response);
+
+    public abstract void onFailure(Request request, Exception e);
+
+    public static final ResponseCallBack<String> defaultCallBack = new ResponseCallBack<String>() {
+
+        @Override
+        public void onResponse(String response) {
+
+        }
+
+        @Override
+        public void onFailure(Request request, Exception e) {
+
+        }
+    };
 }

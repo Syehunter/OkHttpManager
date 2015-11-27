@@ -1,5 +1,6 @@
 package z.sye.space.library;
 
+import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
@@ -10,14 +11,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import z.sye.space.library.response.ResponseCallback;
+import z.sye.space.library.response.ResponseCallBack;
+
 
 /**
  * Created by Syehunter on 2015/11/26.
  */
 public class OkHttpManager {
 
-    private static ResponseCallback mResponseCallback = new ResponseCallback();
+    private static ResponseCallBack mCallBack;
 
     private static final OkHttpManager mInstance = new OkHttpManager();
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -25,7 +27,7 @@ public class OkHttpManager {
     private static String mUrl;
     private static HashMap<String, String> mHeaders;
     private static JSONObject mJsonObject;
-    private static ArrayList<String> mRemovedHeaders;
+    private static ArrayList<String> mRemovedHeaders = new ArrayList<>();
 
     private OkHttpManager(){
 
@@ -36,11 +38,11 @@ public class OkHttpManager {
     }
 
     /**
-     * @param responseCallback 请求回调
+     * @param callBack 请求回调
      * @return
      */
-    public static OkHttpManager callback(ResponseCallback responseCallback){
-        mResponseCallback = responseCallback;
+    public static OkHttpManager callback(ResponseCallBack callBack){
+        mCallBack = callBack;
         return mInstance;
     }
 
@@ -69,9 +71,6 @@ public class OkHttpManager {
      * @return
      */
     public static OkHttpManager removeHeader(String header){
-        if (null == mRemovedHeaders){
-            mRemovedHeaders = new ArrayList<>();
-        }
         mRemovedHeaders.add(header);
         return mInstance;
     }
@@ -92,13 +91,8 @@ public class OkHttpManager {
     public static void postJson(){
         Request request = getBuilder();
 
-        if (null == mResponseCallback){
-            //不需要回调
-            OkHttpClientManager.postJson(request);
-        } else {
-            //需要回调
-            OkHttpClientManager.postJson(request, mResponseCallback);
-        }
+        OkHttpClientManager.getInstance().enqueue(request, mCallBack);
+
 
         reset();
     }
@@ -177,7 +171,6 @@ public class OkHttpManager {
      * 发送请求后将所有参数重置
      */
     private static void reset(){
-        mResponseCallback = null;
         mHeaders = null;
         mUrl = null;
         mJsonObject = null;
@@ -190,7 +183,7 @@ public class OkHttpManager {
      * @param url 请求地址
      */
     public static void cancelRequest(String url){
-        OkHttpClientManager.cancel(url);
+        OkHttpClientManager.getInstance().cancel(url);
     }
 
     /**
@@ -201,7 +194,7 @@ public class OkHttpManager {
      * @return
      */
     public static OkHttpManager setConnectTimeOut(long timeOut, TimeUnit unit){
-        OkHttpClientManager.setConnectionTimeOut(timeOut, unit);
+        OkHttpClientManager.getInstance().setConnectionTimeOut(timeOut, unit);
         return mInstance;
     }
 }

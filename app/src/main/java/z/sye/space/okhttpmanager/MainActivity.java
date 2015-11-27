@@ -10,16 +10,20 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.squareup.okhttp.Response;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.ResponseBody;
 
-import java.io.IOException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 
 import z.sye.space.library.OkHttpManager;
-import z.sye.space.library.response.ResponseCallback;
+import z.sye.space.library.response.ResponseCallBack;
 
 public class MainActivity extends AppCompatActivity {
+
+    String url = "http://app.kfxiong.com/client/homeBorrow.do";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,24 +41,32 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ResponseCallback callback = new ResponseCallback(){
-            @Override
-            public void onResponse(Response response) throws IOException {
-                super.onResponse(response);
-                ResponseBody body = response.body();
-                Log.i(MainActivity.this.toString(), body.string());
-            }
-        };
 
         HashMap<String, String> headers = new HashMap<>();
         headers.put("version", "1.0.0");
         headers.put("secretKey", "");
         headers.put("channel", "Android");
 
-        OkHttpManager.url("http://app.kfxiong.com/client/homeBorrow.do")
+        HashMap<String, String> params = new HashMap<>();
+        params.put("pageSize", "8");
+        JSONObject jsonObject = new JSONObject(params);
+
+        OkHttpManager.url(url)
                 .addHeader(headers)
-                .addJsonBody("{" + "\"pageSize\":" +  "\"8\"" + "}")
-                .callback(callback)
+                .addJsonBody(jsonObject)
+                .callback(new ResponseCallBack<String>() {
+
+                    @Override
+                    public void onResponse(String json) {
+//                        String json = jsonObject.toString();
+                        Log.i(this.toString(), json);
+                    }
+
+                    @Override
+                    public void onFailure(Request request, Exception e) {
+
+                    }
+                })
                 .postJson();
 
     }
