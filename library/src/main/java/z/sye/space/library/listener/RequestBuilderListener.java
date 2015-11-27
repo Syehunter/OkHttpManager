@@ -1,5 +1,7 @@
 package z.sye.space.library.listener;
 
+import org.json.JSONObject;
+
 import java.util.HashMap;
 
 /**
@@ -23,5 +25,5 @@ public interface RequestBuilderListener {
      * 请求提交Json字符串
      * @return
      */
-    String addJsonBody();
+    JSONObject addJsonBody();
 }

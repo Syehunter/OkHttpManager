@@ -6,24 +6,26 @@ import com.squareup.okhttp.RequestBody;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import z.sye.space.library.response.ResponseCallback;
-import z.sye.space.library.utils.JsonValidator;
 
 /**
  * Created by Syehunter on 2015/11/26.
  */
 public class OkHttpManager {
 
-    private static ResponseCallback responseCallback = new ResponseCallback();
+    private static ResponseCallback mResponseCallback = new ResponseCallback();
 
     private static final OkHttpManager mInstance = new OkHttpManager();
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     private static String mUrl;
-    private static HashMap<String, String> mHeader;
+    private static HashMap<String, String> mHeaders;
     private static JSONObject mJsonObject;
+    private static ArrayList<String> mRemovedHeaders;
 
     private OkHttpManager(){
 
@@ -33,28 +35,44 @@ public class OkHttpManager {
         return mInstance;
     }
 
+    /**
+     * @param responseCallback 请求回调
+     * @return
+     */
     public static OkHttpManager callback(ResponseCallback responseCallback){
-        mInstance.responseCallback = responseCallback;
+        mResponseCallback = responseCallback;
         return mInstance;
     }
 
     /**
-     * 设置请求的Url
-     * @param url
+     * @param url  request Url
      * @return
      */
     public static OkHttpManager url(String url){
-        mInstance.mUrl = url;
+        mUrl = url;
         return mInstance;
     }
 
     /**
+     * add RequestHeaders
      * 设置请求头
-     * @param header
+     * @param headers
      * @return
      */
-    public static OkHttpManager addHeader(HashMap<String, String> header){
-        mInstance.mHeader = header;
+    public static OkHttpManager addHeader(HashMap<String, String> headers){
+        mHeaders = headers;
+        return mInstance;
+    }
+
+    /**
+     * @param header header will be removed
+     * @return
+     */
+    public static OkHttpManager removeHeader(String header){
+        if (null == mRemovedHeaders){
+            mRemovedHeaders = new ArrayList<>();
+        }
+        mRemovedHeaders.add(header);
         return mInstance;
     }
 
@@ -72,43 +90,118 @@ public class OkHttpManager {
      * POST请求提交Json串
      */
     public static void postJson(){
-        Request.Builder builder = new Request.Builder();
+        Request request = getBuilder();
 
-        //url
-        if (null != mUrl){
-            builder.url(mUrl);
-        }
-
-        //RequestHeader
-        if (null != mHeader){
-            for (String key : mHeader.keySet()){
-                builder.addHeader(key, mHeader.get(key));
-            }
-        }
-
-        //添加RequestBody
-        if (null != mJsonObject){
-            RequestBody requestBody = RequestBody.create(JSON, mJsonObject.toString());
-            builder.post(requestBody);
-        }
-
-        Request request = builder.build();
-        if (null == responseCallback){
+        if (null == mResponseCallback){
             //不需要回调
             OkHttpClientManager.postJson(request);
         } else {
             //需要回调
-            OkHttpClientManager.postJson(request, responseCallback);
+            OkHttpClientManager.postJson(request, mResponseCallback);
         }
+
         reset();
     }
 
     /**
-     * 发送请求后将所有参数重置     */
+     * put params into builder
+     * 配置builder参数
+     * @return
+     */
+    private static Request getBuilder() {
+        Request.Builder builder = new Request.Builder();
+
+        buildUrl(builder);
+
+        buildHeader(builder);
+
+        buildRemovedHeader(builder);
+
+        buildJson(builder);
+
+        return builder.build();
+    }
+
+    /**
+     * build RequestBody with MediaType.Json
+     * build Json请求体
+     * @param builder
+     */
+    private static void buildJson(Request.Builder builder) {
+        if (null != mJsonObject){
+            RequestBody requestBody = RequestBody.create(JSON, mJsonObject.toString());
+            builder.post(requestBody);
+        }
+    }
+
+    /**
+     * remove RequestHeader
+     * 移除请求头
+     * @param builder
+     */
+    private static void buildRemovedHeader(Request.Builder builder) {
+        for (String header : mRemovedHeaders){
+            if (mHeaders.containsKey(header)){
+                builder.removeHeader(header);
+            }
+        }
+    }
+
+    /**
+     * build RequestHeaders
+     * build 请求头
+     * @param builder
+     */
+    private static void buildHeader(Request.Builder builder) {
+        if (null != mHeaders){
+            for (String key : mHeaders.keySet()){
+                builder.addHeader(key, mHeaders.get(key));
+            }
+        }
+    }
+
+    /**
+     * build url&&tag
+     * build 请求url和tag
+     * @param builder
+     */
+    private static void buildUrl(Request.Builder builder) {
+        if (null != mUrl){
+            builder.url(mUrl);
+            builder.tag(mUrl);
+        }
+    }
+
+    /**
+     * reset all params after request been sent
+     * 发送请求后将所有参数重置
+     */
     private static void reset(){
-        responseCallback = null;
-        mHeader = null;
+        mResponseCallback = null;
+        mHeaders = null;
         mUrl = null;
         mJsonObject = null;
+        mRemovedHeaders.clear();
+    }
+
+    /**
+     * cancel request by Url
+     * 取消请求
+     * @param url 请求地址
+     */
+    public static void cancelRequest(String url){
+        OkHttpClientManager.cancel(url);
+    }
+
+    /**
+     * set the time out of each request
+     * 设置请求超时时间
+     * @param timeOut
+     * @param unit
+     * @return
+     */
+    public static OkHttpManager setConnectTimeOut(long timeOut, TimeUnit unit){
+        OkHttpClientManager.setConnectionTimeOut(timeOut, unit);
+        return mInstance;
     }
 }
