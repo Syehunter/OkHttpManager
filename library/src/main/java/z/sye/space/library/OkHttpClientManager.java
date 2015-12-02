@@ -102,10 +102,10 @@ public class OkHttpClientManager {
                     if (responseCallBack.mType == String.class) {
                         //单独处理String类型
                         responseCallBack.onResponse(response.body().string());
-                        responseCallBack.onResponseHeader(response.headers());
                     } else {
                         responseCallBack.onResponse(mGson.fromJson(response.body().string(), responseCallBack.mType));
                     }
+                    responseCallBack.onResponseHeader(response.headers());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
