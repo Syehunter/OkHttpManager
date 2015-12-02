@@ -15,6 +15,8 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLSocketFactory;
+
 import z.sye.space.library.response.ResponseCallBack;
 
 /**
@@ -181,5 +183,9 @@ public class OkHttpClientManager {
 
     public Cache getCache() {
         return mClient.getCache();
+    }
+
+    public void setSslSocketFactory(SSLSocketFactory socketFactory) {
+        mClient.setSslSocketFactory(socketFactory);
     }
 }
