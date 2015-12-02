@@ -4,6 +4,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.squareup.okhttp.Authenticator;
+import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.MultipartBuilder;
@@ -434,6 +435,24 @@ public class OkHttpManager {
     public static OkHttpManager setReadTimeout(long timeOut, TimeUnit unit){
         OkHttpClientManager.getInstance().setReadTimeout(timeOut, unit);
         return mInstance;
+    }
+
+    /**
+     * 设置缓存
+     * @param cache
+     * @return
+     */
+    public static OkHttpManager setCache(Cache cache){
+        OkHttpClientManager.getInstance().setCache(cache);
+        return mInstance;
+    }
+
+    /**
+     * 获取缓存
+     * @return
+     */
+    public static Cache getCache(){
+        return OkHttpClientManager.getInstance().getCache();
     }
 
     /**

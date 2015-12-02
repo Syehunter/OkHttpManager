@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.squareup.okhttp.Authenticator;
+import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -31,16 +32,17 @@ public class OkHttpClientManager {
     private Handler mHandler = new Handler(Looper.getMainLooper());
     private final Gson mGson;
 
-    private OkHttpClientManager(){
+    private OkHttpClientManager() {
         mGson = new Gson();
     }
 
-    public static OkHttpClientManager getInstance(){
+    public static OkHttpClientManager getInstance() {
         return mInstance;
     }
 
     /**
      * 同步请求
+     *
      * @param request
      */
     public Response excute(Request request) {
@@ -55,10 +57,11 @@ public class OkHttpClientManager {
 
     /**
      * 异步请求
+     *
      * @param request
      * @param responseCallBack
      */
-    public void enqueue(final Request request, final ResponseCallBack responseCallBack){
+    public void enqueue(final Request request, final ResponseCallBack responseCallBack) {
         responseCallBack.onPreExcute();
         mClient.newCall(request).enqueue(new Callback() {
 
@@ -69,11 +72,11 @@ public class OkHttpClientManager {
 
             @Override
             public void onResponse(Response response) throws IOException {
-                if (null == responseCallBack){
+                if (null == responseCallBack) {
                     return;
                 }
 
-                if (!response.isSuccessful()){
+                if (!response.isSuccessful()) {
                     Log.e(this.toString(), "Error Response Code == " + response.code());
                     doFailure(request, new RuntimeException(response.body().string()), responseCallBack);
                 } else {
@@ -85,6 +88,7 @@ public class OkHttpClientManager {
 
     /**
      * 处理请求成功时的动作
+     *
      * @param response
      */
     private void doResponse(final Response response, final ResponseCallBack responseCallBack) {
@@ -93,14 +97,14 @@ public class OkHttpClientManager {
             public void run() {
                 responseCallBack.onPostExcute();
                 try {
-                    if (responseCallBack.mType == String.class){
+                    if (responseCallBack.mType == String.class) {
                         //单独处理String类型
                         responseCallBack.onResponse(response.body().string());
                         responseCallBack.onResponseHeader(response.headers());
                     } else {
                         responseCallBack.onResponse(mGson.fromJson(response.body().string(), responseCallBack.mType));
                     }
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -110,12 +114,13 @@ public class OkHttpClientManager {
 
     /**
      * 处理请求失败的动作
+     *
      * @param request
      * @param e
      * @param responseCallBack
      */
     private void doFailure(final Request request, final Exception e, final ResponseCallBack responseCallBack) {
-        if (null == responseCallBack){
+        if (null == responseCallBack) {
             return;
         }
 
@@ -128,44 +133,53 @@ public class OkHttpClientManager {
         });
     }
 
-    public void cancel(Object tag){
+    public void cancel(Object tag) {
         mClient.cancel(tag);
     }
 
-    public void setConnectionTimeout(Long timeout, TimeUnit unit){
-        if (null != timeout){
+    public void setConnectionTimeout(Long timeout, TimeUnit unit) {
+        if (null != timeout) {
             mTimeOut = timeout;
         }
-        if (null != unit){
+        if (null != unit) {
             mUint = unit;
         }
         mClient.setConnectTimeout(mTimeOut, mUint);
     }
 
-    public void setWriteTimeout(Long timeout, TimeUnit unit){
-        if (null != timeout){
+    public void setWriteTimeout(Long timeout, TimeUnit unit) {
+        if (null != timeout) {
             mTimeOut = timeout;
         }
-        if (null != unit){
+        if (null != unit) {
             mUint = unit;
         }
         mClient.setWriteTimeout(mTimeOut, mUint);
     }
 
-    public void setReadTimeout(Long timeout, TimeUnit unit){
-        if (null != timeout){
+    public void setReadTimeout(Long timeout, TimeUnit unit) {
+        if (null != timeout) {
             mTimeOut = timeout;
         }
-        if (null != unit){
+        if (null != unit) {
             mUint = unit;
         }
         mClient.setReadTimeout(mTimeOut, mUint);
     }
 
-    public void setAuthenticator(Authenticator authenticator){
-        if (null != authenticator){
+    public void setAuthenticator(Authenticator authenticator) {
+        if (null != authenticator) {
             mClient.setAuthenticator(authenticator);
         }
     }
 
+    public void setCache(Cache cache) {
+        if (null != cache) {
+            mClient.setCache(cache);
+        }
+    }
+
+    public Cache getCache() {
+        return mClient.getCache();
+    }
 }
