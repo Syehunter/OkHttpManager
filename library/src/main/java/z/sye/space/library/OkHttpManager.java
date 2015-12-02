@@ -1,5 +1,6 @@
 package z.sye.space.library;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.squareup.okhttp.FormEncodingBuilder;
@@ -20,6 +21,10 @@ import z.sye.space.library.response.ResponseCallBack;
  * Created by Syehunter on 2015/11/26.
  */
 public class OkHttpManager {
+
+    enum Method{
+        GET, POST;
+    }
 
     private static ResponseCallBack mCallBack;
 
@@ -54,6 +59,9 @@ public class OkHttpManager {
      * @return
      */
     public static OkHttpManager url(String url){
+        if (TextUtils.isEmpty(url)){
+            throw new NullPointerException("Request Url cannot be null!");
+        }
         mUrl = url;
         return mInstance;
     }
@@ -79,7 +87,7 @@ public class OkHttpManager {
     }
 
     /**
-     * 提交json
+     * post提交json
      * @param jsonObject
      * @return
      */
@@ -89,7 +97,7 @@ public class OkHttpManager {
     }
 
     /**
-     * 提交表单
+     * post提交表单
      * @return
      */
     public static OkHttpManager formBody(HashMap<String, String> formBody){
@@ -98,10 +106,10 @@ public class OkHttpManager {
     }
 
     /**
-     * 同步post请求
+     * 同步GET请求
      */
-    public static void postExcute(){
-        Request request = getBuilder();
+    public static void getExcute(){
+        Request request = buildRequest(Method.GET);
 
         OkHttpClientManager.getInstance().excute(request);
 
@@ -109,10 +117,39 @@ public class OkHttpManager {
     }
 
     /**
-     * 异步post请求
+     * 异步GET请求
+     */
+    public static void getEnqueue(){
+        if (null == mCallBack){
+            throw new NullPointerException("Enqueue Request must have a CallBack");
+        }
+
+        Request request = buildRequest(Method.GET);
+        OkHttpClientManager.getInstance().enqueue(request, mCallBack);
+
+        reset();
+    }
+
+    /**
+     * 同步POST请求
+     */
+    public static void postExcute(){
+        Request request = buildRequest(Method.POST);
+
+        OkHttpClientManager.getInstance().excute(request);
+
+        reset();
+    }
+
+    /**
+     * 异步POST请求
      */
     public static void postEnqueue(){
-        Request request = getBuilder();
+        if (null == mCallBack){
+            throw new NullPointerException("Enqueue Request must have a CallBack");
+        }
+
+        Request request = buildRequest(Method.POST);
 
         OkHttpClientManager.getInstance().enqueue(request, mCallBack);
 
@@ -120,14 +157,16 @@ public class OkHttpManager {
     }
 
     /**
-     * put params into builder
-     * 配置builder参数
+     * put params into Request
+     * 配置Request参数
      * @return
      */
-    private static Request getBuilder() {
+    private static Request buildRequest(Method method) {
         Request.Builder builder = new Request.Builder();
 
-        inspectParamsLegitimacy();
+        if (!inspectParamsLegitimacy()){
+            throw new IllegalArgumentException("There should be only one RequestBody.");
+        }
 
         buildUrl(builder);
 
@@ -135,17 +174,29 @@ public class OkHttpManager {
 
         buildRemovedHeader(builder);
 
-        buildJson(builder);
+        if (Method.POST == method){
+            //如果是post请求，添加请求体
+            buildRequestBody(builder);
+        }
 
         return builder.build();
     }
 
     /**
      * 检验参数是否合法
+     * @return
+     *      true 参数合法
+     *      false 参数不合法
      */
     private static boolean inspectParamsLegitimacy() {
-        //TODO
-        return false;
+        int paramsCount = 0;
+        if (null != mJsonObject){
+            paramsCount += 1;
+        }
+        if (null != mFormBody){
+            paramsCount += 1;
+        }
+        return paramsCount > 1 ? false : true;
     }
 
     /**
@@ -153,7 +204,7 @@ public class OkHttpManager {
      * build Json请求体
      * @param builder
      */
-    private static void buildJson(Request.Builder builder) {
+    private static void buildRequestBody(Request.Builder builder) {
         if (null != mJsonObject){
             RequestBody requestBody = RequestBody.create(JSON, mJsonObject.toString());
             builder.post(requestBody);
@@ -199,9 +250,11 @@ public class OkHttpManager {
      * @param builder
      */
     private static void buildUrl(Request.Builder builder) {
-        if (null != mUrl){
+        if (!TextUtils.isEmpty(mUrl)){
             builder.url(mUrl);
             builder.tag(mUrl);
+        } else {
+            throw new NullPointerException("Request Url cannot be null!");
         }
     }
 
@@ -242,5 +295,27 @@ public class OkHttpManager {
     public static OkHttpManager setConnectTimeOut(long timeOut, TimeUnit unit){
         OkHttpClientManager.getInstance().setConnectionTimeOut(timeOut, unit);
         return mInstance;
+    }
+
+    /**
+     * 将Get请求的参数转化为字符串
+     */
+    public static String attachGetParamsToUrl(HashMap<String, String> params){
+        String paramsUrl = "";
+        if (null != params && params.size() > 0){
+            for (String key : params.keySet()){
+                paramsUrl += key + "=" + params.get(key) + "&";
+            }
+            paramsUrl = "?" + paramsUrl.substring(0, paramsUrl.length() - 1);
+        }
+        return paramsUrl;
+    }
+
+    /**
+     * 将Get请求的参数转化为字符串
+     * 单一请求参数
+     */
+    public static String attachGetParamsToUrl(String key, String value){
+        return "?" + key + "=" + value;
     }
 }

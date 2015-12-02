@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         HashMap<String, String> headers = new HashMap<>();
         headers.put("version", "1.0.0");
         headers.put("secretKey", "");
@@ -65,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .postEnqueue();
+
 
     }
 
