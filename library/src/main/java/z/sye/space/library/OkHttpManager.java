@@ -6,6 +6,7 @@ import android.util.Log;
 import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
@@ -45,6 +46,7 @@ public class OkHttpManager {
     private static String mString;
     private static File mFile;
     private static BufferedSink mSink;
+    private static MultipartBuilder mMultipartBuilder;
 
     private OkHttpManager(){
 
@@ -111,13 +113,19 @@ public class OkHttpManager {
      * @param string
      * @return
      */
-    public static OkHttpManager String(MediaType type, String string){
+    public static OkHttpManager string(MediaType type, String string){
         mType = type;
         mString = string;
         return mInstance;
     }
 
-    public static OkHttpManager Stream(MediaType type, BufferedSink sink){
+    /**
+     *
+     * @param type
+     * @param sink
+     * @return
+     */
+    public static OkHttpManager stream(MediaType type, BufferedSink sink){
         mType = type;
         mSink = sink;
         return mInstance;
@@ -129,9 +137,19 @@ public class OkHttpManager {
      * @param file
      * @return
      */
-    public static OkHttpManager File(MediaType type, File file){
+    public static OkHttpManager file(MediaType type, File file){
         mType = type;
         mFile = file;
+        return mInstance;
+    }
+
+    /**
+     * post提交分块请求，由用户自定义builder
+     * @param builder
+     * @return
+     */
+    public static OkHttpManager multipart(MultipartBuilder builder){
+        mMultipartBuilder = builder;
         return mInstance;
     }
 
@@ -233,6 +251,9 @@ public class OkHttpManager {
      */
     private static boolean inspectParamsLegitimacy() {
         int paramsCount = 0;
+        if (null != mMultipartBuilder){
+            paramsCount += 1;
+        }
         if (null != mJsonObject){
             paramsCount += 1;
         }
@@ -300,6 +321,11 @@ public class OkHttpManager {
             builder.post(requestBody);
             return;
         }
+
+        if (null != mMultipartBuilder){
+            builder.post(mMultipartBuilder.build());
+            return;
+        }
     }
 
     /**
@@ -356,6 +382,7 @@ public class OkHttpManager {
         mString = null;
         mFile = null;
         mSink = null;
+        mMultipartBuilder = null;
     }
 
     /**
