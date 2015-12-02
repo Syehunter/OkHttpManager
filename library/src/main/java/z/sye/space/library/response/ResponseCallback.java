@@ -7,7 +7,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
- * Created by Syehunter on 2015/11/27.
+ * Created by Syehunter on 11/27/2015.
  */
 public abstract class ResponseCallBack<T> {
 
@@ -18,7 +18,7 @@ public abstract class ResponseCallBack<T> {
     }
 
     /**
-     * 规范泛型参数
+     * 获得当前泛型
      * @param clazz
      * @return
      */

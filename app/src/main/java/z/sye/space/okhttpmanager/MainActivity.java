@@ -10,9 +10,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.ResponseBody;
 
 import org.json.JSONObject;
 
@@ -53,12 +51,11 @@ public class MainActivity extends AppCompatActivity {
 
         OkHttpManager.url(url)
                 .addHeader(headers)
-                .addJsonBody(jsonObject)
+                .json(jsonObject)
                 .callback(new ResponseCallBack<String>() {
 
                     @Override
                     public void onResponse(String json) {
-//                        String json = jsonObject.toString();
                         Log.i(this.toString(), json);
                     }
 
@@ -67,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 })
-                .postJson();
+                .postEnqueue();
 
     }
 

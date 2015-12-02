@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 
 import z.sye.space.library.response.ResponseCallBack;
 
-
 /**
  * Created by Syehunter on 2015/11/26.
  */
@@ -23,7 +22,7 @@ public class OkHttpClientManager {
     private static final OkHttpClientManager mInstance = new OkHttpClientManager();
     private static final OkHttpClient mClient = new OkHttpClient();
 
-    //自定义默认的请求超时时间
+    //默认请求超时时间
     private static long mTimeOut = 10;
     private static TimeUnit mUint = TimeUnit.SECONDS;
 
@@ -38,6 +37,23 @@ public class OkHttpClientManager {
         return mInstance;
     }
 
+    /**
+     * 同步请求
+     * @param request
+     */
+    public void excute(Request request) {
+        try {
+            mClient.newCall(request).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 异步请求
+     * @param request
+     * @param responseCallBack
+     */
     public void enqueue(final Request request, final ResponseCallBack responseCallBack){
         responseCallBack.onPreExcute();
         mClient.newCall(request).enqueue(new Callback() {

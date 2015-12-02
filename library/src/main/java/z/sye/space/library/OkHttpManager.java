@@ -1,6 +1,8 @@
 package z.sye.space.library;
 
-import com.squareup.okhttp.Callback;
+import android.util.Log;
+
+import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
@@ -28,6 +30,7 @@ public class OkHttpManager {
     private static HashMap<String, String> mHeaders;
     private static JSONObject mJsonObject;
     private static ArrayList<String> mRemovedHeaders = new ArrayList<>();
+    private static HashMap<String, String> mFormBody;
 
     private OkHttpManager(){
 
@@ -76,23 +79,42 @@ public class OkHttpManager {
     }
 
     /**
-     * Json格式请求体
+     * 提交json
      * @param jsonObject
      * @return
      */
-    public static OkHttpManager addJsonBody(JSONObject jsonObject){
+    public static OkHttpManager json(JSONObject jsonObject){
         mJsonObject = jsonObject;
         return mInstance;
     }
 
     /**
-     * POST请求提交Json串
+     * 提交表单
+     * @return
      */
-    public static void postJson(){
+    public static OkHttpManager formBody(HashMap<String, String> formBody){
+        mFormBody = formBody;
+        return mInstance;
+    }
+
+    /**
+     * 同步post请求
+     */
+    public static void postExcute(){
+        Request request = getBuilder();
+
+        OkHttpClientManager.getInstance().excute(request);
+
+        reset();
+    }
+
+    /**
+     * 异步post请求
+     */
+    public static void postEnqueue(){
         Request request = getBuilder();
 
         OkHttpClientManager.getInstance().enqueue(request, mCallBack);
-
 
         reset();
     }
@@ -104,6 +126,8 @@ public class OkHttpManager {
      */
     private static Request getBuilder() {
         Request.Builder builder = new Request.Builder();
+
+        inspectParamsLegitimacy();
 
         buildUrl(builder);
 
@@ -117,6 +141,14 @@ public class OkHttpManager {
     }
 
     /**
+     * 检验参数是否合法
+     */
+    private static boolean inspectParamsLegitimacy() {
+        //TODO
+        return false;
+    }
+
+    /**
      * build RequestBody with MediaType.Json
      * build Json请求体
      * @param builder
@@ -125,6 +157,13 @@ public class OkHttpManager {
         if (null != mJsonObject){
             RequestBody requestBody = RequestBody.create(JSON, mJsonObject.toString());
             builder.post(requestBody);
+        }
+        if (null != mFormBody){
+            FormEncodingBuilder encodingBuilder = new FormEncodingBuilder();
+            for (String key : mFormBody.keySet()){
+                encodingBuilder.add(key, mFormBody.get(key));
+            }
+            builder.post(encodingBuilder.build());
         }
     }
 
@@ -175,6 +214,7 @@ public class OkHttpManager {
         mUrl = null;
         mJsonObject = null;
         mRemovedHeaders.clear();
+        mFormBody = null;
     }
 
     /**
@@ -183,7 +223,13 @@ public class OkHttpManager {
      * @param url 请求地址
      */
     public static void cancelRequest(String url){
-        OkHttpClientManager.getInstance().cancel(url);
+        try {
+            OkHttpClientManager.getInstance().cancel(url);
+        } catch (Exception e){
+            //catch OkHttp取消请求时可能throw出的Exception,防止crash
+            Log.e("OnOkHttpCancel", e.toString());
+            e.printStackTrace();
+        }
     }
 
     /**
