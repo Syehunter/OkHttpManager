@@ -3,17 +3,22 @@ package z.sye.space.library;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import okio.BufferedSink;
 import z.sye.space.library.response.ResponseCallBack;
 
 
@@ -23,7 +28,7 @@ import z.sye.space.library.response.ResponseCallBack;
 public class OkHttpManager {
 
     enum Method{
-        GET, POST;
+        GET, POST
     }
 
     private static ResponseCallBack mCallBack;
@@ -33,9 +38,13 @@ public class OkHttpManager {
 
     private static String mUrl;
     private static HashMap<String, String> mHeaders;
-    private static JSONObject mJsonObject;
     private static ArrayList<String> mRemovedHeaders = new ArrayList<>();
+    private static MediaType mType;
+    private static JSONObject mJsonObject;
     private static HashMap<String, String> mFormBody;
+    private static String mString;
+    private static File mFile;
+    private static BufferedSink mSink;
 
     private OkHttpManager(){
 
@@ -97,6 +106,36 @@ public class OkHttpManager {
     }
 
     /**
+     * post提交String，<1MB
+     * @param type
+     * @param string
+     * @return
+     */
+    public static OkHttpManager String(MediaType type, String string){
+        mType = type;
+        mString = string;
+        return mInstance;
+    }
+
+    public static OkHttpManager Stream(MediaType type, BufferedSink sink){
+        mType = type;
+        mSink = sink;
+        return mInstance;
+    }
+
+    /**
+     * post提交文件
+     * @param type
+     * @param file
+     * @return
+     */
+    public static OkHttpManager File(MediaType type, File file){
+        mType = type;
+        mFile = file;
+        return mInstance;
+    }
+
+    /**
      * post提交表单
      * @return
      */
@@ -108,12 +147,14 @@ public class OkHttpManager {
     /**
      * 同步GET请求
      */
-    public static void getExcute(){
+    public static Response getExcute(){
         Request request = buildRequest(Method.GET);
 
-        OkHttpClientManager.getInstance().excute(request);
+        Response response = OkHttpClientManager.getInstance().excute(request);
 
         reset();
+
+        return response;
     }
 
     /**
@@ -133,12 +174,14 @@ public class OkHttpManager {
     /**
      * 同步POST请求
      */
-    public static void postExcute(){
+    public static Response postExcute(){
         Request request = buildRequest(Method.POST);
 
-        OkHttpClientManager.getInstance().excute(request);
+        Response response = OkHttpClientManager.getInstance().excute(request);
 
         reset();
+
+        return response;
     }
 
     /**
@@ -196,6 +239,15 @@ public class OkHttpManager {
         if (null != mFormBody){
             paramsCount += 1;
         }
+        if (null != mType && null != mString){
+            paramsCount += 1;
+        }
+        if (null != mType && null != mFile){
+            paramsCount += 1;
+        }
+        if (null != mType && null != mSink){
+            paramsCount += 1;
+        }
         return paramsCount > 1 ? false : true;
     }
 
@@ -208,13 +260,45 @@ public class OkHttpManager {
         if (null != mJsonObject){
             RequestBody requestBody = RequestBody.create(JSON, mJsonObject.toString());
             builder.post(requestBody);
+            return;
         }
+
         if (null != mFormBody){
             FormEncodingBuilder encodingBuilder = new FormEncodingBuilder();
             for (String key : mFormBody.keySet()){
                 encodingBuilder.add(key, mFormBody.get(key));
             }
             builder.post(encodingBuilder.build());
+            return;
+        }
+
+        if (null != mType && null != mString){
+            RequestBody requestBody = RequestBody.create(mType, mString);
+            builder.post(requestBody);
+            return;
+        }
+
+        if (null != mType && null != mFile){
+            RequestBody requestBody = RequestBody.create(mType, mFile);
+            builder.post(requestBody);
+            return;
+        }
+
+        if (null != mType && null != mFile){
+            RequestBody requestBody = new RequestBody() {
+
+                @Override
+                public MediaType contentType() {
+                    return mType;
+                }
+
+                @Override
+                public void writeTo(BufferedSink sink) throws IOException {
+                    sink = mSink;
+                }
+            };
+            builder.post(requestBody);
+            return;
         }
     }
 
@@ -268,6 +352,10 @@ public class OkHttpManager {
         mJsonObject = null;
         mRemovedHeaders.clear();
         mFormBody = null;
+        mType = null;
+        mString = null;
+        mFile = null;
+        mSink = null;
     }
 
     /**
@@ -293,7 +381,43 @@ public class OkHttpManager {
      * @return
      */
     public static OkHttpManager setConnectTimeOut(long timeOut, TimeUnit unit){
-        OkHttpClientManager.getInstance().setConnectionTimeOut(timeOut, unit);
+        OkHttpClientManager.getInstance().setConnectionTimeout(timeOut, unit);
+        return mInstance;
+    }
+
+    /**
+     * set the time out of each request
+     * 设置写入超时时间
+     * @param timeOut
+     * @param unit
+     * @return
+     */
+    public static OkHttpManager setWriteTimeout(long timeOut, TimeUnit unit){
+        OkHttpClientManager.getInstance().setWriteTimeout(timeOut, unit);
+        return mInstance;
+    }
+
+    /**
+     * set the time out of each request
+     * 设置读取超时时间
+     * @param timeOut
+     * @param unit
+     * @return
+     */
+    public static OkHttpManager setReadTimeout(long timeOut, TimeUnit unit){
+        OkHttpClientManager.getInstance().setReadTimeout(timeOut, unit);
+        return mInstance;
+    }
+
+    /**
+     * 设置Http AUTH认证
+     * @param authenticator
+     * @return
+     */
+    public static OkHttpManager setAuthenticator(Authenticator authenticator){
+        if (null != authenticator){
+            OkHttpClientManager.getInstance().setAuthenticator(authenticator);
+        }
         return mInstance;
     }
 

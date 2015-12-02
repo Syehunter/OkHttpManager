@@ -1,6 +1,7 @@
 package z.sye.space.library.response;
 
 import com.google.gson.internal.$Gson$Types;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 
 import java.lang.reflect.ParameterizedType;
@@ -52,6 +53,13 @@ public abstract class ResponseCallBack<T> {
     }
 
     public abstract void onResponse(T response);
+
+    /**
+     * 响应头，可根据需要复写该方法
+     */
+    public void onResponseHeader(Headers responseHeaders){
+
+    }
 
     public abstract void onFailure(Request request, Exception e);
 

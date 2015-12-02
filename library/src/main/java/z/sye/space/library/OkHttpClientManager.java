@@ -2,8 +2,10 @@ package z.sye.space.library;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.google.gson.Gson;
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -41,12 +43,14 @@ public class OkHttpClientManager {
      * 同步请求
      * @param request
      */
-    public void excute(Request request) {
+    public Response excute(Request request) {
         try {
-            mClient.newCall(request).execute();
+            Response response = mClient.newCall(request).execute();
+            return response;
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -70,6 +74,7 @@ public class OkHttpClientManager {
                 }
 
                 if (!response.isSuccessful()){
+                    Log.e(this.toString(), "Error Response Code == " + response.code());
                     doFailure(request, new RuntimeException(response.body().string()), responseCallBack);
                 } else {
                     doResponse(response, responseCallBack);
@@ -91,6 +96,7 @@ public class OkHttpClientManager {
                     if (responseCallBack.mType == String.class){
                         //单独处理String类型
                         responseCallBack.onResponse(response.body().string());
+                        responseCallBack.onResponseHeader(response.headers());
                     } else {
                         responseCallBack.onResponse(mGson.fromJson(response.body().string(), responseCallBack.mType));
                     }
@@ -126,14 +132,40 @@ public class OkHttpClientManager {
         mClient.cancel(tag);
     }
 
-    public void setConnectionTimeOut(Long timeOut, TimeUnit unit){
-        if (null != timeOut){
-            mTimeOut = timeOut;
+    public void setConnectionTimeout(Long timeout, TimeUnit unit){
+        if (null != timeout){
+            mTimeOut = timeout;
         }
         if (null != unit){
             mUint = unit;
         }
         mClient.setConnectTimeout(mTimeOut, mUint);
+    }
+
+    public void setWriteTimeout(Long timeout, TimeUnit unit){
+        if (null != timeout){
+            mTimeOut = timeout;
+        }
+        if (null != unit){
+            mUint = unit;
+        }
+        mClient.setWriteTimeout(mTimeOut, mUint);
+    }
+
+    public void setReadTimeout(Long timeout, TimeUnit unit){
+        if (null != timeout){
+            mTimeOut = timeout;
+        }
+        if (null != unit){
+            mUint = unit;
+        }
+        mClient.setReadTimeout(mTimeOut, mUint);
+    }
+
+    public void setAuthenticator(Authenticator authenticator){
+        if (null != authenticator){
+            mClient.setAuthenticator(authenticator);
+        }
     }
 
 }
