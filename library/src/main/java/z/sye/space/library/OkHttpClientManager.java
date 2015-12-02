@@ -125,7 +125,7 @@ public class OkHttpClientManager {
         if (null == responseCallBack) {
             return;
         }
-
+        Log.e(this.toString(), e.toString());
         mHandler.post(new Runnable() {
             @Override
             public void run() {

@@ -14,6 +14,7 @@ import com.squareup.okhttp.Request;
 
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import z.sye.space.library.OkHttpManager;
@@ -34,10 +35,26 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                OkHttpManager.url("https://kyfw.12306.cn/otn/")
+                        .callback(new ResponseCallBack<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                                Log.i(this.toString(), "response success : " + response);
+                            }
+
+                            @Override
+                            public void onFailure(Request request, Exception e) {
+                            }
+                        })
+                        .getEnqueue();
             }
         });
+
+        try {
+            OkHttpManager.setCertificates(getAssets().open("srca.cer"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         HashMap<String, String> headers = new HashMap<>();
         headers.put("version", "1.0.0");
@@ -48,14 +65,28 @@ public class MainActivity extends AppCompatActivity {
         params.put("pageSize", "8");
         JSONObject jsonObject = new JSONObject(params);
 
-        OkHttpManager.url(url)
-                .addHeader(headers)
-                .json(jsonObject)
-                .callback(new ResponseCallBack<String>() {
+//        OkHttpManager.url(url)
+//                .addHeader(headers)
+//                .json(jsonObject)
+//                .callback(new ResponseCallBack<String>() {
+//
+//                    @Override
+//                    public void onResponse(String json) {
+//                        Log.i(this.toString(), json);
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Request request, Exception e) {
+//
+//                    }
+//                })
+//                .postEnqueue();
 
+        OkHttpManager.url("https://kyfw.12306.cn/otn/")
+                .callback(new ResponseCallBack<String>() {
                     @Override
-                    public void onResponse(String json) {
-                        Log.i(this.toString(), json);
+                    public void onResponse(String response) {
+
                     }
 
                     @Override
@@ -63,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 })
-                .postEnqueue();
+                .getEnqueue();
 
 
     }
