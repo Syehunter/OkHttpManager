@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.squareup.okhttp.Cache;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.Request;
@@ -119,6 +120,12 @@ public class MainActivity extends AppCompatActivity {
             int progress = (int) (current * 100 / total);
             Log.i(this.toString(), "=======> DownLoading <=================" + progress);
             super.onDownLoad(current, total, done);
+        }
+
+        @Override
+        protected void onResponseHeader(Headers responseHeaders) {
+            //Override this method if u need to get response headers
+            super.onResponseHeader(responseHeaders);
         }
     }
 

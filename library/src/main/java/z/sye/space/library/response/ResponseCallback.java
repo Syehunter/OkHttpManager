@@ -82,8 +82,16 @@ public abstract class ResponseCallBack<T> {
     /**
      * 响应头，可根据需要复写该方法
      */
-    public void onResponseHeader(Headers responseHeaders){
+    public void onResponseHeaderCallBack(final Headers responseHeaders){
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onResponseHeader(responseHeaders);
+            }
+        });
+    }
 
+    protected void onResponseHeader(Headers responseHeaders) {
     }
 
     public void onFailureCallBack(final Request request, final Exception e){

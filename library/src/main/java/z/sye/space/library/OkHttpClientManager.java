@@ -183,7 +183,7 @@ public class OkHttpClientManager {
             } else {
                 responseCallBack.onResponseCallBack(mGson.fromJson(response.body().string(), responseCallBack.mType));
             }
-            responseCallBack.onResponseHeader(response.headers());
+            responseCallBack.onResponseHeaderCallBack(response.headers());
         } catch (Exception e) {
             e.printStackTrace();
         }
