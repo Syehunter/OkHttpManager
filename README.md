@@ -87,3 +87,22 @@
 	            super.onDownLoad(current, total, done);
 	        }
 	    }
+
+* Cancel
+
+		@Override
+	    protected void onDestroy() {
+	        OkHttpManager.cancelRequest(url);
+	        super.onDestroy();
+	    }
+
+* Cache
+
+		//OkHttpManager.setCache(new Cache());
+        //Cache cache = OkHttpManager.getCache();
+
+* Other Configurations
+
+		OkHttpManager.setConnectTimeOut()
+			.setWriteTimeout()
+			.setReadTimeout();

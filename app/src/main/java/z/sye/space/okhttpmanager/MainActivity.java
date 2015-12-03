@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.Request;
@@ -88,7 +89,16 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        //Cache
+        //OkHttpManager.setCache(new Cache());
+        //Cache cache = OkHttpManager.getCache();
 
+
+        //Other Configurations
+
+        //OkHttpManager.setConnectTimeOut()
+                //.setWriteTimeout()
+                //.setReadTimeout();
 
     }
 
@@ -132,5 +142,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        OkHttpManager.cancelRequest(url);
+        super.onDestroy();
     }
 }
