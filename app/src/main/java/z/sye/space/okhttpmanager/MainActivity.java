@@ -14,6 +14,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.Request;
 
 import org.json.JSONObject;
@@ -28,36 +30,52 @@ import z.sye.space.library.response.ResponseCallBack;
 
 public class MainActivity extends AppCompatActivity {
 
-    String url = "http://app.kfxiong.com/client/kfx_app_1.0.apk";
-    private TextView tv;
-    private MyCallBack myCallBack;
+    String url = "";
+    private MyCallBack myCallBack = new MyCallBack();
     private HashMap<String, String> headers;
     private HashMap<String, String> params;
     private JSONObject jsonObject;
 
-    private int count = 1;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                OkHttpManager.url(url)
-                        .addHeader(headers)
-                        .json(jsonObject)
-                        .callback(myCallBack)
-                        .postEnqueue();
 
-            }
-        });
+        //SyncGetRequest
+        url = url + OkHttpManager.attachGetParamsToUrl("paramsKey", "paramsValue");     //add single Get params
+        url = url + OkHttpManager.attachGetParamsToUrl(new HashMap<String, String>());   //Add multiple Get parmas
+        OkHttpManager.url(url)
+                .addHeader(headers)
+                .getExcute();
 
-        tv = (TextView) findViewById(R.id.tv);
+        //AsyncGetRequest
+        OkHttpManager.url(url)
+                .addHeader(headers)
+                .callback(myCallBack)
+                .getEnqueue();
+
+        //SyncPostRequest
+        OkHttpManager.url(url)
+                .addHeader(headers)
+                .postExcute();
+
+        //AsyncPostRequest
+        OkHttpManager.url(url)
+                .addHeader(headers)
+                .callback(myCallBack)
+                .json(jsonObject)           //postJson
+//                .formBody(new HashMap<String, String>())  //postFormBody
+//                .stream(mediaType, sink)  //postStream
+//                .string(mediaType, s)     //postString
+//                .file(mediaType, file)    //postFile
+//                .multipart(new MultipartBuilder())        //post MultipartRequest
+                .postEnqueue();
+
+        //DownLoad
+        OkHttpManager.url(url)
+                .addHeader(headers)
+                .callback(myCallBack)
+                .downLoad(new File(Environment.getExternalStorageDirectory(), "ur Filename"));
 
         try {
             OkHttpManager.setCertificates(getAssets().open("srca.cer"));
@@ -67,33 +85,18 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        File file = new File(Environment.getExternalStorageDirectory(), "test.apk");
 
-        myCallBack = new MyCallBack();
+        //Self-signed HTTPS
+        // * U'd better put these codes in ur application
+        try {
+            OkHttpManager.setCertificates(getAssets().open("ur certificate"), "ur password");
+//            OkHttpManager.setCertificates(inputStream);
+            //set this if SSLPeerUnverifiedException occured with "Hostname xxx not verified"
+//            OkHttpManager.setHostnameVerifier("ur Hostname");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-//        OkHttpManager.url(url)
-//                .addHeader(headers)
-//                .json(jsonObject)
-//                .callback(myCallBack)
-//                .postEnqueue();
-//
-//        OkHttpManager.url("https://kyfw.12306.cn/otn/")
-//                .callback(new ResponseCallBack<String>() {
-//                    @Override
-//                    public void onResponse(String response) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Request request, Exception e) {
-//
-//                    }
-//                })
-//                .getEnqueue();
-
-        OkHttpManager.url(url)
-                .callback(myCallBack)
-                .downLoad(file);
 
 
     }
@@ -102,9 +105,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onResponse(String response) {
-            Log.i(this.toString(), response);
-            count++;
-                    tv.setText("success" + count);
+            Log.i(this.toString(), "Success : " + response);
         }
 
         @Override
