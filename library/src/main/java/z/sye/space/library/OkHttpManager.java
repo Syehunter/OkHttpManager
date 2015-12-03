@@ -17,15 +17,25 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import okio.BufferedSink;
 import z.sye.space.library.response.ResponseCallBack;
@@ -36,7 +46,7 @@ import z.sye.space.library.response.ResponseCallBack;
  */
 public class OkHttpManager {
 
-    enum Method{
+    enum Method {
         GET, POST
     }
 
@@ -56,11 +66,11 @@ public class OkHttpManager {
     private static BufferedSink mSink;
     private static MultipartBuilder mMultipartBuilder;
 
-    private OkHttpManager(){
+    private OkHttpManager() {
 
     }
 
-    public static OkHttpManager getInstance(){
+    public static OkHttpManager getInstance() {
         return mInstance;
     }
 
@@ -68,17 +78,17 @@ public class OkHttpManager {
      * @param callBack 请求回调
      * @return
      */
-    public static OkHttpManager callback(ResponseCallBack callBack){
+    public static OkHttpManager callback(ResponseCallBack callBack) {
         mCallBack = callBack;
         return mInstance;
     }
 
     /**
-     * @param url  request Url
+     * @param url request Url
      * @return
      */
-    public static OkHttpManager url(String url){
-        if (TextUtils.isEmpty(url)){
+    public static OkHttpManager url(String url) {
+        if (TextUtils.isEmpty(url)) {
             throw new NullPointerException("Request Url cannot be null!");
         }
         mUrl = url;
@@ -88,10 +98,11 @@ public class OkHttpManager {
     /**
      * add RequestHeaders
      * 设置请求头
+     *
      * @param headers
      * @return
      */
-    public static OkHttpManager addHeader(HashMap<String, String> headers){
+    public static OkHttpManager addHeader(HashMap<String, String> headers) {
         mHeaders = headers;
         return mInstance;
     }
@@ -100,40 +111,41 @@ public class OkHttpManager {
      * @param header header will be removed
      * @return
      */
-    public static OkHttpManager removeHeader(String header){
+    public static OkHttpManager removeHeader(String header) {
         mRemovedHeaders.add(header);
         return mInstance;
     }
 
     /**
      * post提交json
+     *
      * @param jsonObject
      * @return
      */
-    public static OkHttpManager json(JSONObject jsonObject){
+    public static OkHttpManager json(JSONObject jsonObject) {
         mJsonObject = jsonObject;
         return mInstance;
     }
 
     /**
      * post提交String，<1MB
+     *
      * @param type
      * @param string
      * @return
      */
-    public static OkHttpManager string(MediaType type, String string){
+    public static OkHttpManager string(MediaType type, String string) {
         mType = type;
         mString = string;
         return mInstance;
     }
 
     /**
-     *
      * @param type
      * @param sink
      * @return
      */
-    public static OkHttpManager stream(MediaType type, BufferedSink sink){
+    public static OkHttpManager stream(MediaType type, BufferedSink sink) {
         mType = type;
         mSink = sink;
         return mInstance;
@@ -141,11 +153,12 @@ public class OkHttpManager {
 
     /**
      * post提交文件
+     *
      * @param type
      * @param file
      * @return
      */
-    public static OkHttpManager file(MediaType type, File file){
+    public static OkHttpManager file(MediaType type, File file) {
         mType = type;
         mFile = file;
         return mInstance;
@@ -153,19 +166,21 @@ public class OkHttpManager {
 
     /**
      * post提交分块请求，由用户自定义builder
+     *
      * @param builder
      * @return
      */
-    public static OkHttpManager multipart(MultipartBuilder builder){
+    public static OkHttpManager multipart(MultipartBuilder builder) {
         mMultipartBuilder = builder;
         return mInstance;
     }
 
     /**
      * post提交表单
+     *
      * @return
      */
-    public static OkHttpManager formBody(HashMap<String, String> formBody){
+    public static OkHttpManager formBody(HashMap<String, String> formBody) {
         mFormBody = formBody;
         return mInstance;
     }
@@ -173,7 +188,7 @@ public class OkHttpManager {
     /**
      * 同步GET请求
      */
-    public static Response getExcute(){
+    public static Response getExcute() {
         Request request = buildRequest(Method.GET);
 
         Response response = OkHttpClientManager.getInstance().excute(request);
@@ -186,8 +201,8 @@ public class OkHttpManager {
     /**
      * 异步GET请求
      */
-    public static void getEnqueue(){
-        if (null == mCallBack){
+    public static void getEnqueue() {
+        if (null == mCallBack) {
             throw new NullPointerException("Enqueue Request must have a CallBack");
         }
 
@@ -200,7 +215,7 @@ public class OkHttpManager {
     /**
      * 同步POST请求
      */
-    public static Response postExcute(){
+    public static Response postExcute() {
         Request request = buildRequest(Method.POST);
 
         Response response = OkHttpClientManager.getInstance().excute(request);
@@ -213,8 +228,8 @@ public class OkHttpManager {
     /**
      * 异步POST请求
      */
-    public static void postEnqueue(){
-        if (null == mCallBack){
+    public static void postEnqueue() {
+        if (null == mCallBack) {
             throw new NullPointerException("Enqueue Request must have a CallBack");
         }
 
@@ -228,12 +243,13 @@ public class OkHttpManager {
     /**
      * put params into Request
      * 配置Request参数
+     *
      * @return
      */
     private static Request buildRequest(Method method) {
         Request.Builder builder = new Request.Builder();
 
-        if (!inspectParamsLegitimacy()){
+        if (!inspectParamsLegitimacy()) {
             throw new IllegalArgumentException("There should be only one RequestBody.");
         }
 
@@ -243,7 +259,7 @@ public class OkHttpManager {
 
         buildRemovedHeader(builder);
 
-        if (Method.POST == method){
+        if (Method.POST == method) {
             //如果是post请求，添加请求体
             buildRequestBody(builder);
         }
@@ -253,29 +269,29 @@ public class OkHttpManager {
 
     /**
      * 检验参数是否合法
-     * @return
-     *      true 参数合法
-     *      false 参数不合法
+     *
+     * @return true 参数合法
+     * false 参数不合法
      */
     private static boolean inspectParamsLegitimacy() {
         int paramsCount = 0;
-        if (null != mMultipartBuilder){
-            paramsCount += 1;
+        if (null != mMultipartBuilder) {
+            paramsCount++;
         }
-        if (null != mJsonObject){
-            paramsCount += 1;
+        if (null != mJsonObject) {
+            paramsCount++;
         }
-        if (null != mFormBody){
-            paramsCount += 1;
+        if (null != mFormBody) {
+            paramsCount++;
         }
-        if (null != mType && null != mString){
-            paramsCount += 1;
+        if (null != mType && null != mString) {
+            paramsCount++;
         }
-        if (null != mType && null != mFile){
-            paramsCount += 1;
+        if (null != mType && null != mFile) {
+            paramsCount++;
         }
-        if (null != mType && null != mSink){
-            paramsCount += 1;
+        if (null != mType && null != mSink) {
+            paramsCount++;
         }
         return paramsCount > 1 ? false : true;
     }
@@ -283,37 +299,38 @@ public class OkHttpManager {
     /**
      * build RequestBody with MediaType.Json
      * build Json请求体
+     *
      * @param builder
      */
     private static void buildRequestBody(Request.Builder builder) {
-        if (null != mJsonObject){
+        if (null != mJsonObject) {
             RequestBody requestBody = RequestBody.create(JSON, mJsonObject.toString());
             builder.post(requestBody);
             return;
         }
 
-        if (null != mFormBody){
+        if (null != mFormBody) {
             FormEncodingBuilder encodingBuilder = new FormEncodingBuilder();
-            for (String key : mFormBody.keySet()){
+            for (String key : mFormBody.keySet()) {
                 encodingBuilder.add(key, mFormBody.get(key));
             }
             builder.post(encodingBuilder.build());
             return;
         }
 
-        if (null != mType && null != mString){
+        if (null != mType && null != mString) {
             RequestBody requestBody = RequestBody.create(mType, mString);
             builder.post(requestBody);
             return;
         }
 
-        if (null != mType && null != mFile){
+        if (null != mType && null != mFile) {
             RequestBody requestBody = RequestBody.create(mType, mFile);
             builder.post(requestBody);
             return;
         }
 
-        if (null != mType && null != mFile){
+        if (null != mType && null != mFile) {
             RequestBody requestBody = new RequestBody() {
 
                 @Override
@@ -330,7 +347,7 @@ public class OkHttpManager {
             return;
         }
 
-        if (null != mMultipartBuilder){
+        if (null != mMultipartBuilder) {
             builder.post(mMultipartBuilder.build());
             return;
         }
@@ -339,11 +356,12 @@ public class OkHttpManager {
     /**
      * remove RequestHeader
      * 移除请求头
+     *
      * @param builder
      */
     private static void buildRemovedHeader(Request.Builder builder) {
-        for (String header : mRemovedHeaders){
-            if (mHeaders.containsKey(header)){
+        for (String header : mRemovedHeaders) {
+            if (mHeaders.containsKey(header)) {
                 builder.removeHeader(header);
             }
         }
@@ -352,11 +370,12 @@ public class OkHttpManager {
     /**
      * build RequestHeaders
      * build 请求头
+     *
      * @param builder
      */
     private static void buildHeader(Request.Builder builder) {
-        if (null != mHeaders){
-            for (String key : mHeaders.keySet()){
+        if (null != mHeaders) {
+            for (String key : mHeaders.keySet()) {
                 builder.addHeader(key, mHeaders.get(key));
             }
         }
@@ -365,10 +384,11 @@ public class OkHttpManager {
     /**
      * build url&&tag
      * build 请求url和tag
+     *
      * @param builder
      */
     private static void buildUrl(Request.Builder builder) {
-        if (!TextUtils.isEmpty(mUrl)){
+        if (!TextUtils.isEmpty(mUrl)) {
             builder.url(mUrl);
             builder.tag(mUrl);
         } else {
@@ -380,7 +400,7 @@ public class OkHttpManager {
      * reset all params after request been sent
      * 发送请求后将所有参数重置
      */
-    private static void reset(){
+    private static void reset() {
         mHeaders = null;
         mUrl = null;
         mJsonObject = null;
@@ -396,12 +416,13 @@ public class OkHttpManager {
     /**
      * cancel request by Url
      * 取消请求
+     *
      * @param url 请求地址
      */
-    public static void cancelRequest(String url){
+    public static void cancelRequest(String url) {
         try {
             OkHttpClientManager.getInstance().cancel(url);
-        } catch (Exception e){
+        } catch (Exception e) {
             //catch OkHttp取消请求时可能throw出的Exception,防止crash
             Log.e("OnOkHttpCancel", e.toString());
             e.printStackTrace();
@@ -411,11 +432,12 @@ public class OkHttpManager {
     /**
      * set the time out of each request
      * 设置请求超时时间
+     *
      * @param timeOut
      * @param unit
      * @return
      */
-    public static OkHttpManager setConnectTimeOut(long timeOut, TimeUnit unit){
+    public static OkHttpManager setConnectTimeOut(long timeOut, TimeUnit unit) {
         OkHttpClientManager.getInstance().setConnectionTimeout(timeOut, unit);
         return mInstance;
     }
@@ -423,11 +445,12 @@ public class OkHttpManager {
     /**
      * set the time out of each request
      * 设置写入超时时间
+     *
      * @param timeOut
      * @param unit
      * @return
      */
-    public static OkHttpManager setWriteTimeout(long timeOut, TimeUnit unit){
+    public static OkHttpManager setWriteTimeout(long timeOut, TimeUnit unit) {
         OkHttpClientManager.getInstance().setWriteTimeout(timeOut, unit);
         return mInstance;
     }
@@ -435,40 +458,66 @@ public class OkHttpManager {
     /**
      * set the time out of each request
      * 设置读取超时时间
+     *
      * @param timeOut
      * @param unit
      * @return
      */
-    public static OkHttpManager setReadTimeout(long timeOut, TimeUnit unit){
+    public static OkHttpManager setReadTimeout(long timeOut, TimeUnit unit) {
         OkHttpClientManager.getInstance().setReadTimeout(timeOut, unit);
         return mInstance;
     }
 
     /**
      * 设置缓存
+     *
      * @param cache
      * @return
      */
-    public static OkHttpManager setCache(Cache cache){
+    public static OkHttpManager setCache(Cache cache) {
         OkHttpClientManager.getInstance().setCache(cache);
         return mInstance;
     }
 
     /**
      * 获取缓存
+     *
      * @return
      */
-    public static Cache getCache(){
+    public static Cache getCache() {
         return OkHttpClientManager.getInstance().getCache();
     }
 
     /**
+     * 将Get请求的参数转化为字符串
+     */
+    public static String attachGetParamsToUrl(HashMap<String, String> params) {
+        String paramsUrl = "";
+        if (null != params && params.size() > 0) {
+            for (String key : params.keySet()) {
+                paramsUrl += key + "=" + params.get(key) + "&";
+            }
+            paramsUrl = "?" + paramsUrl.substring(0, paramsUrl.length() - 1);
+        }
+        return paramsUrl;
+    }
+
+    /**
+     * 将Get请求的参数转化为字符串
+     * 单一请求参数
+     */
+    public static String attachGetParamsToUrl(String key, String value) {
+        return "?" + key + "=" + value;
+    }
+
+    /**
      * 设置Http AUTH认证
+     *
      * @param authenticator
      * @return
      */
-    public static OkHttpManager setAuthenticator(Authenticator authenticator){
-        if (null != authenticator){
+    public static OkHttpManager setAuthenticator(Authenticator authenticator) {
+        if (null != authenticator) {
             OkHttpClientManager.getInstance().setAuthenticator(authenticator);
         }
         return mInstance;
@@ -476,9 +525,10 @@ public class OkHttpManager {
 
     /**
      * 添加信任自签名HTTPS证书
+     *
      * @param certificates
      */
-    public static void setCertificates(InputStream... certificates){
+    public static void setCertificates(InputStream... certificates) {
         try {
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -491,8 +541,7 @@ public class OkHttpManager {
                 try {
                     if (certificate != null)
                         certificate.close();
-                } catch (IOException e)
-                {
+                } catch (IOException e) {
                 }
             }
 
@@ -502,39 +551,132 @@ public class OkHttpManager {
                     TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
             trustManagerFactory.init(keyStore);
-            sslContext.init(
+            sslContext.init
+                    (
                             null,
                             trustManagerFactory.getTrustManagers(),
                             new SecureRandom()
                     );
             OkHttpClientManager.getInstance().setSslSocketFactory(sslContext.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    /**
+     * 添加信任自签名HTTPS证书(BKS)
+     *
+     * @param bksFile
+     * @param password
+     */
+    public static void setCertificates(InputStream bksFile, String password) {
+        try {
+
+            KeyStore keyStore = initKeyStore(bksFile, password);
+
+            TrustManager[] trustManagers = initTrustManager(keyStore);
+
+            KeyManager[] keyManagers = initKeymanagers(keyStore, password);
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init
+                    (
+                            keyManagers,
+                            new TrustManager[]{new HttpsTrustManager(chooseTrustManager(trustManagers))},
+                            new SecureRandom()
+                    );
+            OkHttpClientManager.getInstance().setSslSocketFactory(sslContext.getSocketFactory());
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
-     * 将Get请求的参数转化为字符串
+     * 设置Https HostName
+     * 若出现javax.net.ssl.SSLPeerUnverifiedException: Hostname xxxx not verified时调用此方法
+     *
+     * @param hostName 主机名，传null或""为信任所有
      */
-    public static String attachGetParamsToUrl(HashMap<String, String> params){
-        String paramsUrl = "";
-        if (null != params && params.size() > 0){
-            for (String key : params.keySet()){
-                paramsUrl += key + "=" + params.get(key) + "&";
-            }
-            paramsUrl = "?" + paramsUrl.substring(0, paramsUrl.length() - 1);
+    public static OkHttpManager setHostnameVerifier(String hostName) {
+        if (!TextUtils.isEmpty(hostName)) {
+            OkHttpClientManager.getInstance().setHostnameVerifier(hostName);
         }
-        return paramsUrl;
+        return mInstance;
     }
 
-    /**
-     * 将Get请求的参数转化为字符串
-     * 单一请求参数
-     */
-    public static String attachGetParamsToUrl(String key, String value){
-        return "?" + key + "=" + value;
+    private static KeyStore initKeyStore(InputStream bksFile, String password) {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("BKS");
+            if (null != bksFile && null != password) {
+                keyStore.load(bksFile, password.toCharArray());
+            } else {
+                keyStore.load(null);
+            }
+            return keyStore;
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+
+    private static KeyManager[] initKeymanagers(KeyStore keyStore, String password) {
+        if (null == keyStore || null == password) {
+            return null;
+        }
+        try {
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, password.toCharArray());
+            return keyManagerFactory.getKeyManagers();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnrecoverableKeyException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static TrustManager[] initTrustManager(KeyStore keyStore) {
+        if (null == keyStore) {
+            return null;
+        }
+        try {
+            TrustManagerFactory trustManagerFactory = null;
+
+            trustManagerFactory = TrustManagerFactory.
+                    getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keyStore);
+
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+
+            return trustManagers;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static X509TrustManager chooseTrustManager(TrustManager[] trustManagers) {
+        for (TrustManager trustManager : trustManagers) {
+            if (trustManager instanceof X509TrustManager) {
+                return (X509TrustManager) trustManager;
+            }
+        }
+        return null;
+    }
+
 }

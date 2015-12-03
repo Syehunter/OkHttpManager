@@ -1,6 +1,8 @@
 package z.sye.space.okhttpmanager;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -9,12 +11,14 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.squareup.okhttp.Request;
 
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 
 import z.sye.space.library.OkHttpManager;
@@ -22,7 +26,14 @@ import z.sye.space.library.response.ResponseCallBack;
 
 public class MainActivity extends AppCompatActivity {
 
-    String url = "http://app.kfxiong.com/client/homeBorrow.do";
+    String url = "";
+    private TextView tv;
+    private MyCallBack myCallBack;
+    private HashMap<String, String> headers;
+    private HashMap<String, String> params;
+    private JSONObject jsonObject;
+
+    private int count = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,52 +46,33 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                OkHttpManager.url("https://kyfw.12306.cn/otn/")
-                        .callback(new ResponseCallBack<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                Log.i(this.toString(), "response success : " + response);
-                            }
+                OkHttpManager.url(url)
+                        .addHeader(headers)
+                        .json(jsonObject)
+                        .callback(myCallBack)
+                        .postEnqueue();
 
-                            @Override
-                            public void onFailure(Request request, Exception e) {
-                            }
-                        })
-                        .getEnqueue();
             }
         });
 
+        tv = (TextView) findViewById(R.id.tv);
+
         try {
-            OkHttpManager.setCertificates(getAssets().open("srca.cer"));
+//            OkHttpManager.setCertificates(getAssets().open("srca.cer"));
+            OkHttpManager.setHostnameVerifier("")
+                    .setCertificates(getAssets().open(""), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("version", "1.0.0");
-        headers.put("secretKey", "");
-        headers.put("channel", "Android");
 
-        HashMap<String, String> params = new HashMap<>();
-        params.put("pageSize", "8");
-        JSONObject jsonObject = new JSONObject(params);
+        myCallBack = new MyCallBack();
 
-//        OkHttpManager.url(url)
-//                .addHeader(headers)
-//                .json(jsonObject)
-//                .callback(new ResponseCallBack<String>() {
-//
-//                    @Override
-//                    public void onResponse(String json) {
-//                        Log.i(this.toString(), json);
-//                    }
-//
-//                    @Override
-//                    public void onFailure(Request request, Exception e) {
-//
-//                    }
-//                })
-//                .postEnqueue();
+        OkHttpManager.url(url)
+                .addHeader(headers)
+                .json(jsonObject)
+                .callback(myCallBack)
+                .postEnqueue();
 
         OkHttpManager.url("https://kyfw.12306.cn/otn/")
                 .callback(new ResponseCallBack<String>() {
@@ -98,6 +90,23 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+    private class MyCallBack extends ResponseCallBack<String>{
+
+        @Override
+        public void onResponse(String response) {
+            Log.i(this.toString(), response);
+            count++;
+                    tv.setText("success" + count);
+        }
+
+        @Override
+        public void onFailure(Request request, Exception e) {
+            Log.e(this.toString(), e.toString());
+        }
+    }
+
+    Handler handler = new Handler();
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

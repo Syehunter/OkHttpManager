@@ -1,7 +1,6 @@
 package z.sye.space.library;
 
-import android.os.Handler;
-import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -15,6 +14,8 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import z.sye.space.library.response.ResponseCallBack;
@@ -31,7 +32,6 @@ public class OkHttpClientManager {
     private static long mTimeOut = 10;
     private static TimeUnit mUint = TimeUnit.SECONDS;
 
-    private Handler mHandler = new Handler(Looper.getMainLooper());
     private final Gson mGson;
 
     private OkHttpClientManager() {
@@ -94,24 +94,17 @@ public class OkHttpClientManager {
      * @param response
      */
     private void doResponse(final Response response, final ResponseCallBack responseCallBack) {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                responseCallBack.onPostExcute();
-                try {
-                    if (responseCallBack.mType == String.class) {
-                        //单独处理String类型
-                        responseCallBack.onResponse(response.body().string());
-                    } else {
-                        responseCallBack.onResponse(mGson.fromJson(response.body().string(), responseCallBack.mType));
-                    }
-                    responseCallBack.onResponseHeader(response.headers());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
+        try {
+            if (responseCallBack.mType == String.class) {
+                //单独处理String类型
+                responseCallBack.onResponseCallBack(response.body().string());
+            } else {
+                responseCallBack.onResponseCallBack(mGson.fromJson(response.body().string(), responseCallBack.mType));
             }
-        });
+            responseCallBack.onResponseHeader(response.headers());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -126,13 +119,7 @@ public class OkHttpClientManager {
             return;
         }
         Log.e(this.toString(), e.toString());
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                responseCallBack.onPostExcute();
-                responseCallBack.onFailure(request, e);
-            }
-        });
+        responseCallBack.onFailureCallBack(request, e);
     }
 
     public void cancel(Object tag) {
@@ -187,5 +174,20 @@ public class OkHttpClientManager {
 
     public void setSslSocketFactory(SSLSocketFactory socketFactory) {
         mClient.setSslSocketFactory(socketFactory);
+    }
+
+    public void setHostnameVerifier(final String hostName){
+        mClient.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession session) {
+                if (TextUtils.isEmpty(hostName)){
+                    return true;
+                }
+                if (hostname.equals(hostName)){
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 }

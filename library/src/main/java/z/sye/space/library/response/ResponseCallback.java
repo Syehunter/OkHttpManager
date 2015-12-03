@@ -1,5 +1,8 @@
 package z.sye.space.library.response;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.google.gson.internal.$Gson$Types;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
@@ -17,6 +20,8 @@ public abstract class ResponseCallBack<T> {
     public ResponseCallBack(){
         mType = getSuperClassType(getClass());
     }
+
+    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     /**
      * 获得当前泛型
@@ -40,19 +45,22 @@ public abstract class ResponseCallBack<T> {
     }
 
     /**
-     * 发送请求之后的操作
-     */
-    public void onPostExcute(){
-    }
-
-    /**
      * 请求过程中
      * @param progress
      */
     public void onProgressUpdate(int progress){
     }
 
-    public abstract void onResponse(T response);
+    public void onResponseCallBack(final T response){
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onResponse(response);
+            }
+        });
+    }
+
+    protected abstract void onResponse(T response);
 
     /**
      * 响应头，可根据需要复写该方法
@@ -61,7 +69,16 @@ public abstract class ResponseCallBack<T> {
 
     }
 
-    public abstract void onFailure(Request request, Exception e);
+    public void onFailureCallBack(final Request request, final Exception e){
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onFailure(request, e);
+            }
+        });
+    }
+
+    protected abstract void onFailure(Request request, Exception e);
 
     public static final ResponseCallBack<String> defaultCallBack = new ResponseCallBack<String>() {
 
