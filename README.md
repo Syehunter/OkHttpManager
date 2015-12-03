@@ -3,40 +3,40 @@
 
 ###Import
 
-  repositories {
+	repositories {
         // ...
         maven { url "https://github.com" }
- }
+ 	}
  
- dependencies {
+	dependencies {
 	        compile 'com.github.Syehunter:OkHttpManager:0.1.0'
 	}
 	
 ### How to use it?
 SyncGetRequest
 
-  url = url + OkHttpManager.attachGetParamsToUrl("paramsKey", "paramsValue");     //add single Get params
-        url = url + OkHttpManager.attachGetParamsToUrl(new HashMap<String, String>());   //Add multiple Get parmas
-        OkHttpManager.url(url)
-                .addHeader(headers)
-                .getExcute();
+	url = url + OkHttpManager.attachGetParamsToUrl("paramsKey", "paramsValue");     //add single Get params
+    url = url + OkHttpManager.attachGetParamsToUrl(new HashMap<String, String>());   //Add multiple Get parmas
+    OkHttpManager.url(url)
+            .addHeader(headers)
+            .getExcute();
               
 AsyncGetRequest
 
-  OkHttpManager.url(url)
+	OkHttpManager.url(url)
                 .addHeader(headers)
                 .callback(myCallBack)
                 .getEnqueue();
                 
 SyncPostRequest
 
-  OkHttpManager.url(url)
+	OkHttpManager.url(url)
                 .addHeader(headers)
                 .postExcute();
                 
 AsyncPostRequest
 
-  OkHttpManager.url(url)
+	OkHttpManager.url(url)
                 .addHeader(headers)
                 .callback(myCallBack)
                 .json(jsonObject)           //postJson
@@ -49,14 +49,14 @@ AsyncPostRequest
                 
 DownLoad
 
-  OkHttpManager.url(url)
+	OkHttpManager.url(url)
                 .addHeader(headers)
                 .callback(myCallBack)
                 .downLoad(new File(Environment.getExternalStorageDirectory(), "ur Filename"));
                 
 Self-signed HTTPS(* U'd better put these codes in ur application)
 
-  try {
+	try {
             OkHttpManager.setCertificates(getAssets().open("ur certificate"), "ur password");
             //OkHttpManager.setCertificates(inputStream);
             
@@ -66,9 +66,9 @@ Self-signed HTTPS(* U'd better put these codes in ur application)
             e.printStackTrace();
         }
         
-CallBack
+CallBack(All Methods of callback run in MainThread)
 
-  private class MyCallBack extends ResponseCallBack<String>{
+	private class MyCallBack extends ResponseCallBack<String>{
 
         @Override
         public void onResponse(String response) {

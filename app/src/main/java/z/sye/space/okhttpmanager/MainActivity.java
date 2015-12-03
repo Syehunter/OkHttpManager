@@ -77,15 +77,6 @@ public class MainActivity extends AppCompatActivity {
                 .callback(myCallBack)
                 .downLoad(new File(Environment.getExternalStorageDirectory(), "ur Filename"));
 
-        try {
-            OkHttpManager.setCertificates(getAssets().open("srca.cer"));
-//            OkHttpManager.setHostnameVerifier("")
-//                    .setCertificates(getAssets().open(""), "");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
         //Self-signed HTTPS
         // * U'd better put these codes in ur application
         try {
