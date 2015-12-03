@@ -7,17 +7,22 @@ import com.google.gson.Gson;
 import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
+import z.sye.space.library.body.DownLoadResponseBody;
 import z.sye.space.library.response.ResponseCallBack;
 
 /**
@@ -86,6 +91,83 @@ public class OkHttpClientManager {
                 }
             }
         });
+    }
+
+    /**
+     * 下载
+     *
+     * @param file
+     * @param request
+     * @param responseCallBack
+     */
+    public void download(final File file, final Request request, final ResponseCallBack responseCallBack) {
+        responseCallBack.onPreExcute();
+        OkHttpClient clone = mClient.clone();
+        clone.networkInterceptors().add(new Interceptor() {
+            @Override
+            public Response intercept(Chain chain) throws IOException {
+                Response originalResponse = chain.proceed(chain.request());
+                Response downloadBuild = originalResponse.newBuilder()
+                        .body(new DownLoadResponseBody(originalResponse.body(), responseCallBack))
+                        .build();
+                return downloadBuild;
+            }
+        });
+        clone.newCall(request).enqueue(new Callback() {
+
+            @Override
+            public void onFailure(Request request, IOException e) {
+                doFailure(request, e, responseCallBack);
+            }
+
+            @Override
+            public void onResponse(Response response) throws IOException {
+                if (null == responseCallBack) {
+                    return;
+                }
+
+                if (!response.isSuccessful()) {
+                    Log.e(this.toString(), "Error Response Code == " + response.code());
+                    doFailure(request, new RuntimeException(response.body().string()), responseCallBack);
+                } else {
+                    doDownload(file, response, responseCallBack);
+                }
+            }
+        });
+    }
+
+    /**
+     * 处理下载请求
+     * @param file
+     * @param response
+     * @param responseCallBack
+     */
+    private void doDownload(File file, Response response, ResponseCallBack responseCallBack) {
+        InputStream is = null;
+        byte[] buf = new byte[2048];
+        int len = 0;
+        FileOutputStream fos = null;
+        try {
+            is = response.body().byteStream();
+            fos = new FileOutputStream(file);
+            while ((len = is.read(buf)) != -1) {
+                fos.write(buf, 0, len);
+            }
+            fos.flush();
+            responseCallBack.onResponseCallBack(file.getAbsolutePath());
+        } catch (IOException e) {
+            responseCallBack.onFailureCallBack(response.request(), e);
+        } finally {
+            try {
+                if (is != null) is.close();
+            } catch (IOException e) {
+            }
+            try {
+                if (fos != null) fos.close();
+            } catch (IOException e) {
+            }
+        }
+
     }
 
     /**
@@ -176,18 +258,19 @@ public class OkHttpClientManager {
         mClient.setSslSocketFactory(socketFactory);
     }
 
-    public void setHostnameVerifier(final String hostName){
+    public void setHostnameVerifier(final String hostName) {
         mClient.setHostnameVerifier(new HostnameVerifier() {
             @Override
             public boolean verify(String hostname, SSLSession session) {
-                if (TextUtils.isEmpty(hostName)){
+                if (TextUtils.isEmpty(hostName)) {
                     return true;
                 }
-                if (hostname.equals(hostName)){
+                if (hostname.equals(hostName)) {
                     return true;
                 }
                 return false;
             }
         });
     }
+
 }

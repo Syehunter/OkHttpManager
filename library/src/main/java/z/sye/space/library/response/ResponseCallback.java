@@ -45,10 +45,27 @@ public abstract class ResponseCallBack<T> {
     }
 
     /**
-     * 请求过程中
-     * @param progress
+     * 文件下载
+     * @param current
+     * @param total
+     * @param done
      */
-    public void onProgressUpdate(int progress){
+    public void onDownLoadCallBack(final long current, final long total, final boolean done){
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onDownLoad(current, total, done);
+            }
+        });
+    }
+
+    /**
+     * 下载实现方法
+     * @param current
+     * @param total
+     * @param done
+     */
+    protected void onDownLoad(long current, long total, boolean done) {
     }
 
     public void onResponseCallBack(final T response){

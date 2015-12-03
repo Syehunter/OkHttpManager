@@ -1,6 +1,7 @@
 package z.sye.space.okhttpmanager;
 
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
@@ -17,6 +18,7 @@ import com.squareup.okhttp.Request;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -26,7 +28,7 @@ import z.sye.space.library.response.ResponseCallBack;
 
 public class MainActivity extends AppCompatActivity {
 
-    String url = "";
+    String url = "http://app.kfxiong.com/client/kfx_app_1.0.apk";
     private TextView tv;
     private MyCallBack myCallBack;
     private HashMap<String, String> headers;
@@ -58,35 +60,40 @@ public class MainActivity extends AppCompatActivity {
         tv = (TextView) findViewById(R.id.tv);
 
         try {
-//            OkHttpManager.setCertificates(getAssets().open("srca.cer"));
-            OkHttpManager.setHostnameVerifier("")
-                    .setCertificates(getAssets().open(""), "");
+            OkHttpManager.setCertificates(getAssets().open("srca.cer"));
+//            OkHttpManager.setHostnameVerifier("")
+//                    .setCertificates(getAssets().open(""), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        File file = new File(Environment.getExternalStorageDirectory(), "test.apk");
 
         myCallBack = new MyCallBack();
 
+//        OkHttpManager.url(url)
+//                .addHeader(headers)
+//                .json(jsonObject)
+//                .callback(myCallBack)
+//                .postEnqueue();
+//
+//        OkHttpManager.url("https://kyfw.12306.cn/otn/")
+//                .callback(new ResponseCallBack<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Request request, Exception e) {
+//
+//                    }
+//                })
+//                .getEnqueue();
+
         OkHttpManager.url(url)
-                .addHeader(headers)
-                .json(jsonObject)
                 .callback(myCallBack)
-                .postEnqueue();
-
-        OkHttpManager.url("https://kyfw.12306.cn/otn/")
-                .callback(new ResponseCallBack<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                    }
-
-                    @Override
-                    public void onFailure(Request request, Exception e) {
-
-                    }
-                })
-                .getEnqueue();
+                .downLoad(file);
 
 
     }
@@ -104,9 +111,14 @@ public class MainActivity extends AppCompatActivity {
         public void onFailure(Request request, Exception e) {
             Log.e(this.toString(), e.toString());
         }
-    }
 
-    Handler handler = new Handler();
+        @Override
+        protected void onDownLoad(long current, long total, boolean done) {
+            int progress = (int) (current * 100 / total);
+            Log.i(this.toString(), "=======> DownLoading <=================" + progress);
+            super.onDownLoad(current, total, done);
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

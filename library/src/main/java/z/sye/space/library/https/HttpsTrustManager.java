@@ -6,7 +6,7 @@
  * <p/>
  * 著作权人保留一切权利，任何使用需经授权。
  */
-package z.sye.space.library;
+package z.sye.space.library.https;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -16,6 +16,8 @@ import java.security.cert.X509Certificate;
 
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+
+import z.sye.space.library.OkHttpManager;
 
 /**
  * Created by Syehunter on 2015/12/3.

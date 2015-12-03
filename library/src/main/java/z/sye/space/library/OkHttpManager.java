@@ -13,11 +13,11 @@ import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -25,7 +25,6 @@ import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +37,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import okio.BufferedSink;
+import z.sye.space.library.https.HttpsTrustManager;
 import z.sye.space.library.response.ResponseCallBack;
 
 
@@ -236,6 +236,18 @@ public class OkHttpManager {
         Request request = buildRequest(Method.POST);
 
         OkHttpClientManager.getInstance().enqueue(request, mCallBack);
+
+        reset();
+    }
+
+    public static void downLoad(File file){
+        if (null == file){
+            throw new NullPointerException("DownLoad Path cannot be null.");
+        }
+
+        Request request = buildRequest(Method.GET);
+
+        OkHttpClientManager.getInstance().download(file, request, mCallBack);
 
         reset();
     }
