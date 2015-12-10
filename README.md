@@ -5,7 +5,7 @@
 
 	repositories {
         // ...
-        maven { url "https://github.com" }
+        maven { url "https://jitpack.io" }
  	}
  
 	dependencies {
