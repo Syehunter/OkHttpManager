@@ -9,7 +9,7 @@
  	}
  
 	dependencies {
-	        compile 'com.github.Syehunter:OkHttpManager:108b3a035d'
+	        'com.github.Syehunter:OkHttpManager:0.1.2'
 	}
 	
 ### How to use it?
