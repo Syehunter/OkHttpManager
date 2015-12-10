@@ -9,7 +9,7 @@
  	}
  
 	dependencies {
-	        'com.github.Syehunter:OkHttpManager:0.1.2'
+	        'com.github.Syehunter:OkHttpManager:0.1.2.1'
 	}
 	
 ### How to use it?
