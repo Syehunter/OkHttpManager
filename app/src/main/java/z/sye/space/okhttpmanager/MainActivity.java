@@ -19,6 +19,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.MultipartBuilder;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import org.json.JSONObject;
 
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onFailure(Request request, Exception e) {
+        public void onFailure(Request request, Response response, Exception e) {
             Log.e(this.toString(), e.toString());
         }
 
@@ -127,28 +128,6 @@ public class MainActivity extends AppCompatActivity {
             //Override this method if u need to get response headers
             super.onResponseHeader(responseHeaders);
         }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

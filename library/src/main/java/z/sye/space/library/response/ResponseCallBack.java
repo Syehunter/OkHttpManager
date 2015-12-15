@@ -6,6 +6,7 @@ import android.os.Looper;
 import com.google.gson.internal.$Gson$Types;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -94,16 +95,16 @@ public abstract class ResponseCallBack<T> {
     protected void onResponseHeader(Headers responseHeaders) {
     }
 
-    public void onFailureCallBack(final Request request, final Exception e){
+    public void onFailureCallBack(final Request request, final Response response, final Exception e){
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                onFailure(request, e);
+                onFailure(request, response, e);
             }
         });
     }
 
-    protected abstract void onFailure(Request request, Exception e);
+    protected abstract void onFailure(Request request, Response response, Exception e);
 
     public static final ResponseCallBack<String> defaultCallBack = new ResponseCallBack<String>() {
 
@@ -113,7 +114,7 @@ public abstract class ResponseCallBack<T> {
         }
 
         @Override
-        public void onFailure(Request request, Exception e) {
+        public void onFailure(Request request, Response response, Exception e) {
 
         }
     };

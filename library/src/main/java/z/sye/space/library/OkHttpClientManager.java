@@ -74,7 +74,7 @@ public class OkHttpClientManager {
 
             @Override
             public void onFailure(Request request, IOException e) {
-                doFailure(request, e, responseCallBack);
+                doFailure(request, null, e, responseCallBack);
             }
 
             @Override
@@ -85,7 +85,7 @@ public class OkHttpClientManager {
 
                 if (!response.isSuccessful()) {
                     Log.e(this.toString(), "Error Response Code == " + response.code());
-                    doFailure(request, new RuntimeException(response.body().string()), responseCallBack);
+                    doFailure(request, response, new RuntimeException(response.body().string()), responseCallBack);
                 } else {
                     doResponse(response, responseCallBack);
                 }
@@ -117,7 +117,7 @@ public class OkHttpClientManager {
 
             @Override
             public void onFailure(Request request, IOException e) {
-                doFailure(request, e, responseCallBack);
+                doFailure(request, null, e, responseCallBack);
             }
 
             @Override
@@ -128,7 +128,7 @@ public class OkHttpClientManager {
 
                 if (!response.isSuccessful()) {
                     Log.e(this.toString(), "Error Response Code == " + response.code());
-                    doFailure(request, new RuntimeException(response.body().string()), responseCallBack);
+                    doFailure(request, response, new RuntimeException(response.body().string()), responseCallBack);
                 } else {
                     doDownload(file, response, responseCallBack);
                 }
@@ -156,7 +156,7 @@ public class OkHttpClientManager {
             fos.flush();
             responseCallBack.onResponseCallBack(file.getAbsolutePath());
         } catch (IOException e) {
-            responseCallBack.onFailureCallBack(response.request(), e);
+            responseCallBack.onFailureCallBack(response.request(), response, e);
         } finally {
             try {
                 if (is != null) is.close();
@@ -196,12 +196,12 @@ public class OkHttpClientManager {
      * @param e
      * @param responseCallBack
      */
-    private void doFailure(final Request request, final Exception e, final ResponseCallBack responseCallBack) {
+    private void doFailure(Request request, Response response, Exception e, ResponseCallBack responseCallBack) {
         if (null == responseCallBack) {
             return;
         }
         Log.e(this.toString(), e.toString());
-        responseCallBack.onFailureCallBack(request, e);
+        responseCallBack.onFailureCallBack(request, response, e);
     }
 
     public void cancel(Object tag) {
