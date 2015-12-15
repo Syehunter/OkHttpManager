@@ -9,7 +9,7 @@
  	}
  
 	dependencies {
-	        'com.github.Syehunter:OkHttpManager:0.1.2.1'
+	        'com.github.Syehunter:OkHttpManager:0.1.2.2'
 	}
 	
 ### How to use it?
@@ -76,7 +76,7 @@
 	        }
 	
 	        @Override
-	        public void onFailure(Request request, Exception e) {
+	        public void onFailure(Request request, Response response, Exception e) {
 	            Log.e(this.toString(), e.toString());
 	        }
 	
